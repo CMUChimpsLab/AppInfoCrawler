@@ -1,4 +1,5 @@
-apps_100
+apps_*
+exception_*
 historyData/
 output/
 reqs.txt  

@@ -34,6 +34,7 @@ import eventlet
 import re
 import urllib
 import sys
+from datetime import datetime
 
 from eventlet.green import urllib2
 
@@ -318,20 +319,20 @@ class AndroidMarketCrawler(object):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) <= 1:
-        sys.stderr.write("\nERROR: destination filepath is missing!\n\n")
-        sys.exit(1)
         
-    fh = open(sys.argv[1], 'w')
-    from datetime import datetime
-    fh.write( str(datetime.utcnow())+ "UTC\n") 
+    nowString = datetime.now().strftime("%Y%m%d%H%M")
+    fstderr = open('exception/exception_' + nowString, 'w')
+    fstdout = open('app/app_' + nowString, 'w')
+    sys.stderr = fstderr
+    fstdout.write( str(datetime.utcnow())+ "UTC\n") 
     sys.stderr.write( str(datetime.utcnow())+ "UTC\n") 
    
     # we are dumping JSON objects, one on each line (this file will be
     # huge, so it's a bad idea to serialize the whole thing as an
     # array
     for app in AndroidMarketCrawler(concurrency=10):
-        fh.write(app + "\n")
-        fh.flush()
+        fstdout.write(app + "\n")
+        fstdout.flush()
 
-    fh.close()
+    fstdout.close()
+    fstderr.close()
