@@ -134,9 +134,23 @@ class AndroidMarketCrawler(object):
         except urllib2.HTTPError, ex:
             # silently ignores errors, even though the script will not
             # block here.
-            sys.stderr.write('1 ' + str(ex) + ':' + url + '\n')
+            sys.stderr.write('1 ' + str(ex) + ': ' + url + '\n')
             if ex.code == 404: 
                 return
+            #503 error code means need input catcha, just try again
+            if ex.code == 503:
+                #sleep only blocks thread
+                eventlet.sleep(1)
+            try:
+                resp = self.browser.open(url)
+
+            except urllib2.HTTPError, ex:
+                # silently ignores errors, even though the script will not
+                # block here.
+                sys.stderr.write('1_5 ' + str(ex) + ': ' + url + '\n')
+                if ex.code == 404: 
+                    return
+
 
             # this is a slight problem, it shouldn't happen but it
             # does sometimes, so keeping tracking is useful to see how
@@ -145,7 +159,7 @@ class AndroidMarketCrawler(object):
             return
 
         except urllib2.URLError, ex:
-            sys.stderr.write('2 ' + str(ex) + ':' + url + '\n')
+            sys.stderr.write('2 ' + str(ex) + ': ' + url + '\n')
             self.failed += 1
             return
 
@@ -187,6 +201,7 @@ class AndroidMarketCrawler(object):
                     self.results.put(app_id)
                     self.cnt += 1
                     print self.cnt
+
         except Exception as ex:
             sys.stderr.write('3 '+ str(ex) + ':' + url + '\n')
             # we must ignore exceptions as sometimes we don't make the
@@ -194,6 +209,7 @@ class AndroidMarketCrawler(object):
             # format can change slightly, etc... when I ran the script
             # the first time it froze halfway-through and had to start
             # all over again
+            self.failed += 1
             pass
 
     def is_page_valid(self, url, doc):
@@ -279,7 +295,7 @@ class AndroidMarketCrawler(object):
             app_info['installs_max'] = int(imax)
 
         return app_info
-#TODO why permission_list is removed
+
     def get_id(self, url):
         """
         Extracts the ID param from a Marketplace URL.
@@ -330,6 +346,8 @@ if __name__ == '__main__':
     # we are dumping JSON objects, one on each line (this file will be
     # huge, so it's a bad idea to serialize the whole thing as an
     # array
+
+    #the results are not set, so there is some chance duplicated app fetched. The reason is set is not sync between different thread
     for app in AndroidMarketCrawler(concurrency=10):
         fstdout.write(app + "\n")
         fstdout.flush()
