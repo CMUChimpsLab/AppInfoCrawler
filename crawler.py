@@ -345,12 +345,20 @@ if __name__ == '__main__':
    
     # we are dumping JSON objects, one on each line (this file will be
     # huge, so it's a bad idea to serialize the whole thing as an
-    # array
-
+    # array)
+    # The huge file is broken into multiple smaller files  
     #the results are not set, so there is some chance duplicated app fetched. The reason is set is not sync between different thread
     for app in AndroidMarketCrawler(concurrency=10):
         fstdout.write(app + "\n")
         fstdout.flush()
+                count += 1
+        if(count == 250):
+                fstdout.close()
+                fstderr.close()
 
-    fstdout.close()
-    fstderr.close()
+                nowString = datetime.now().strftime("%Y%m%d%H%M")
+                fstderr = open('/home/vrudresh/Privacy/AppInfoCrawler/exception/exception_' + nowString, 'w')
+                fstdout = open('/home/vrudresh/Privacy/AppInfoCrawler/app/app_' + nowString, 'w')
+                sys.stderr = fstderr
+
+                count = 0
